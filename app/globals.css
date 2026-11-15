@@ -1,0 +1,193 @@
+@import "tailwindcss";
+
+:root {
+  --p1: #1E80FF;
+  --p2: #38BDF8;
+  --ink: #14161F;
+  --grey: #6B7385;
+  --grey2: #9AA3B2;
+  --line: #E6EEF8;
+  --soft: #F3F8FF;
+  --soft2: #EAF3FF;
+  --green: #12A672;
+  --amber: #D97706;
+  --danger: #E5484D;
+  --radius: 20px;
+  --shadow: 0 12px 32px rgba(30, 96, 200, .07), 0 2px 6px rgba(30, 96, 200, .04);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100dvh;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffffff 0%, #EAF3FF 100%);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Primary & Secondary Button Tokens */
+.btn-primary {
+  background: linear-gradient(90deg, #2B7BF5 0%, #38BDF8 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(30, 128, 255, .24);
+  cursor: pointer;
+  transition: opacity 120ms ease-out, transform 120ms ease-out;
+}
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.94;
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.btn-primary:disabled {
+  background: #DCE5F2;
+  color: #7D889C;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: var(--grey);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 120ms ease-out, color 120ms ease-out, background-color 120ms ease-out;
+}
+.btn-secondary:hover:not(:disabled) {
+  border-color: #C7DAF5;
+  color: var(--ink);
+  background: var(--soft);
+}
+
+/* Main Surface Card */
+.surface-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* Keyboard keycaps: only show on hover-capable desktop devices */
+.kbd-hint {
+  display: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 5px;
+  background: rgba(20, 22, 31, 0.06);
+  color: inherit;
+  opacity: 0.78;
+}
+.btn-primary .kbd-hint {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  opacity: 0.92;
+}
+@media (hover: hover) and (pointer: fine) {
+  .kbd-hint {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Example word highlight */
+mark.word-hl {
+  background: var(--soft2);
+  color: var(--p1);
+  padding: 1px 5px;
+  border-radius: 5px;
+  font-weight: 600;
+}
+
+/* Line clamp 2 for long examples on tight viewports */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Internal scroll container */
+.scroll-inner {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Focus visibility */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--p1);
+  outline-offset: 2px;
+}
+
+/* Height compression tiers for zero-scroll 100dvh guarantee */
+.app-shell {
+  height: 100dvh;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+}
+
+@media (max-width: 899px) {
+  .app-shell {
+    padding: 12px 16px;
+    gap: 10px;
+  }
+}
+
+@media (max-height: 800px) {
+  .app-shell {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    gap: 10px;
+  }
+}
+@media (max-height: 720px) {
+  .app-shell {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    gap: 8px;
+  }
+}
+@media (max-height: 660px) {
+  .app-shell {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    gap: 6px;
+  }
+}
+@media (max-height: 600px) {
+  .app-shell {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    gap: 4px;
+  }
+}
+
+nextjs-portal {
+  display: none !important;
+}
+

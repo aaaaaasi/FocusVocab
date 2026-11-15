@@ -1,0 +1,6 @@
+{
+  "name": "词刻 · 英语背词与记忆训练",
+  "description": "面向四六级、考研、雅思托福与职场学习的离线英语背词网页，支持先猜后看主动回忆、1/2/4/7/15 天记忆曲线复习、同词性小测与听音拼写纠错、1080×1440 打卡战绩卡及多词库本地管理。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
