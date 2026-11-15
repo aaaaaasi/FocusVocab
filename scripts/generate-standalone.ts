@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { BUILTIN_DECKS, DAILY_QUOTES } from '../lib/decks';
 
-const outPath = path.resolve(process.cwd(), 'public', 'vocab-booster.html');
+const outPathPublic = path.resolve(process.cwd(), 'public', 'vocab-booster.html');
+const outPathRoot = path.resolve(process.cwd(), 'index.html');
 
 const css = `
 :root {
@@ -318,17 +319,25 @@ const html = `<!DOCTYPE html>
             </div>
 
             <div style="padding-top:8px;border-top:1px solid var(--line);">
-              <p id="study-example" class="line-clamp-2" style="margin:0;font-size:15px;line-height:1.55;color:var(--ink);"></p>
+              <div id="study-example-box" role="button" tabindex="0" style="padding:6px 10px;margin:0 -10px;border-radius:12px;cursor:pointer;transition:background-color 150ms ease;">
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:2px;">
+                  <span style="color:var(--grey);font-weight:500;">语境原声例句</span>
+                  <span id="study-example-status" style="color:var(--p1);font-weight:600;">点击例句即时揭开高亮词汇</span>
+                </div>
+                <p id="study-example" class="line-clamp-2" style="margin:0;font-size:15px;line-height:1.55;color:var(--ink);"></p>
+              </div>
             </div>
 
             <div style="padding-top:8px;border-top:1px solid var(--line);">
-              <button type="button" id="btn-study-reveal" style="width:100%;min-height:46px;padding:10px 12px;border-radius:12px;background:var(--soft);border:1px dashed #C7DAF5;color:var(--grey);font-size:13px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;">
-                <span>点击显露中文释义与助记 · 先在脑中回想再判分</span>
-                <kbd class="kbd-hint">↓</kbd>
-              </button>
-              <div id="study-revealed-meaning" class="hidden">
-                <p id="study-meaning" style="margin:0;font-size:17px;font-weight:700;color:var(--ink);"></p>
-                <p id="study-example-zh" class="line-clamp-2" style="margin:4px 0 0;font-size:13px;color:var(--grey);"></p>
+              <div id="study-meaning-blur-wrap" style="position:relative;border-radius:12px;overflow:hidden;min-height:54px;padding:8px 12px;background:#F8FBFF;border:1px solid var(--line);">
+                <div id="study-revealed-meaning" style="transition:filter 280ms ease,opacity 280ms ease,transform 280ms ease;">
+                  <p id="study-meaning" style="margin:0;font-size:17px;font-weight:700;color:var(--ink);"></p>
+                  <p id="study-example-zh" class="line-clamp-2" style="margin:3px 0 0;font-size:13px;color:var(--grey);"></p>
+                </div>
+                <button type="button" id="btn-study-reveal" style="position:absolute;inset:0;width:100%;height:100%;padding:8px 12px;border-radius:12px;background:rgba(243,248,255,0.82);backdrop-filter:blur(5px);border:1px dashed #B8D4F8;color:var(--ink);font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;transition:opacity 220ms ease,transform 220ms ease;">
+                  <span>点击解锁中文释义与助记 · 先在脑中回想再判分</span>
+                  <kbd class="kbd-hint">↓</kbd>
+                </button>
               </div>
             </div>
           </div>
@@ -937,6 +946,7 @@ const html = `<!DOCTYPE html>
       var studyQueue = [];
       var studyIdx = 0;
       var studyRevealed = false;
+      var studyExampleRevealed = false;
       var studyUnknownMode = false;
       var studyTab = 'memo';
       var studyUndoStack = [];
@@ -969,6 +979,7 @@ const html = `<!DOCTYPE html>
         if (!item) { show('done'); renderDone(); return; }
 
         studyRevealed = !state.maskEnabled;
+        studyExampleRevealed = !state.maskEnabled;
         studyUnknownMode = false;
         studyTab = 'memo';
 
@@ -976,7 +987,7 @@ const html = `<!DOCTYPE html>
         var done = rec.studiedWords.length;
         var rqLeft = studyQueue.slice(studyIdx).filter(function (x) { return x.isRequeued; }).length;
         var pct = total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
-        document.getElementById('study-progress-text').textContent = '已掌握 ' + done + ' / ' + total + ' 个' + (rqLeft > 0 ? (' · 待重现 ' + rqLeft) : '');
+        document.getElementById('study-progress-text').textContent = '第 ' + Math.min(total, done + 1) + ' / ' + total + ' 个 · 已掌握 ' + done + (rqLeft > 0 ? (' · 待重现 ' + rqLeft) : '');
         document.getElementById('study-progress-pct').textContent = pct + '%';
         document.getElementById('study-progress-bar').style.width = pct + '%';
         document.getElementById('btn-toggle-mask').textContent = state.maskEnabled ? '遮罩自测：开' : '遮罩自测：关';
@@ -997,9 +1008,6 @@ const html = `<!DOCTYPE html>
         document.getElementById('study-word').textContent = item.entry.word;
         document.getElementById('study-phonetic').textContent = item.entry.phonetic;
         document.getElementById('study-pos').textContent = item.entry.pos;
-        document.getElementById('study-example').innerHTML = splitExampleWithTarget(item.entry.example, item.entry.word).map(function (p) {
-          return p.isTarget ? '<mark class="word-hl">' + esc(p.text) + '</mark>' : esc(p.text);
-        }).join('');
         document.getElementById('study-meaning').innerHTML = '<span style="color:var(--p1);margin-right:6px;">' + esc(item.entry.pos) + '</span>' + esc(item.entry.meaning);
         document.getElementById('study-example-zh').textContent = item.entry.exampleZh;
         document.getElementById('m-memo').textContent = item.entry.memo;
@@ -1014,8 +1022,27 @@ const html = `<!DOCTYPE html>
 
       function updateStudyRevealUI() {
         var item = studyQueue[studyIdx];
+        var hlVisible = !state.maskEnabled || studyRevealed || studyExampleRevealed;
+        if (item) {
+          document.getElementById('study-example').innerHTML = splitExampleWithTarget(item.entry.example, item.entry.word).map(function (p) {
+            if (!p.isTarget) return esc(p.text);
+            var blurStyle = hlVisible ? 'filter:blur(0px);transition:filter 220ms ease;' : 'filter:blur(5px);transition:filter 220ms ease;user-select:none;';
+            return '<mark class="word-hl" style="' + blurStyle + '">' + esc(p.text) + '</mark>';
+          }).join('');
+          var stEl = document.getElementById('study-example-status');
+          if (stEl) {
+            stEl.textContent = hlVisible ? '高亮词汇已揭开 · 点击重听' : '点击例句即时揭开高亮词汇';
+            stEl.style.color = hlVisible ? 'var(--green)' : 'var(--p1)';
+          }
+        }
+
         document.getElementById('btn-study-reveal').classList.toggle('hidden', studyRevealed);
-        document.getElementById('study-revealed-meaning').classList.toggle('hidden', !studyRevealed);
+        var meaningWrap = document.getElementById('study-revealed-meaning');
+        if (meaningWrap) {
+          meaningWrap.style.filter = studyRevealed ? 'blur(0px)' : 'blur(9px)';
+          meaningWrap.style.opacity = studyRevealed ? '1' : '0.45';
+          meaningWrap.style.transform = studyRevealed ? 'scale(1)' : 'scale(0.985)';
+        }
         document.getElementById('study-right-masked').classList.toggle('hidden', studyRevealed);
         document.getElementById('study-right-content').classList.toggle('hidden', !studyRevealed);
         document.getElementById('study-mobile-mask-note').classList.toggle('hidden', studyRevealed);
@@ -1990,8 +2017,13 @@ const html = `<!DOCTYPE html>
       document.getElementById('btn-study-speak').addEventListener('click', function (e) {
         guardClick(e.currentTarget, function () { if (studyQueue[studyIdx]) speakWord(studyQueue[studyIdx].entry.word); }, true);
       });
+      document.getElementById('study-example-box').addEventListener('click', function () {
+        studyExampleRevealed = true;
+        if (studyQueue[studyIdx]) speakWord(studyQueue[studyIdx].entry.word);
+        updateStudyRevealUI();
+      });
       document.getElementById('btn-study-reveal').addEventListener('click', function (e) {
-        guardClick(e.currentTarget, function () { studyRevealed = true; updateStudyRevealUI(); });
+        guardClick(e.currentTarget, function () { studyRevealed = true; studyExampleRevealed = true; updateStudyRevealUI(); });
       });
       document.getElementById('btn-study-unknown').addEventListener('click', function (e) { guardClick(e.currentTarget, handleStudyUnknown); });
       document.getElementById('btn-study-known').addEventListener('click', function (e) { guardClick(e.currentTarget, handleStudyKnown); });
@@ -2132,6 +2164,8 @@ const html = `<!DOCTYPE html>
 </body>
 </html>`;
 
-fs.mkdirSync(path.dirname(outPath), { recursive: true });
-fs.writeFileSync(outPath, html, 'utf8');
-console.log(`Generated ${outPath} (${Buffer.byteLength(html, 'utf8')} bytes)`);
+fs.mkdirSync(path.dirname(outPathPublic), { recursive: true });
+fs.writeFileSync(outPathPublic, html, 'utf8');
+fs.writeFileSync(outPathRoot, html, 'utf8');
+console.log(`Generated ${outPathRoot} and ${outPathPublic} (${Buffer.byteLength(html, 'utf8')} bytes)`);
+
